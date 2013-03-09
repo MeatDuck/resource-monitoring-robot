@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<project name="my_test_project" default="build">
+	<property name="lib.dir" value="lib"/>
+	<property name="build.dir" value="build"/>
+	<property name="build.classes.dir" value="${build.dir}/classes"/>
+	<property name="build.jar.dir" value="${build.dir}/jar"/>
+	<property name="log.dir" value="log"/>
+	<property name="sql.dir" value="sql"/>
+	
+	<!-- db config -->
+	<loadproperties srcFile="config.properties"/>
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+	
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    	<delete dir="${log.dir}"/>
+    </target>
+	
+    <target name="compile">
+        <mkdir dir="${build.classes.dir}"/>
+        <javac srcdir="src" destdir="${build.classes.dir}" classpathref="classpath" includeantruntime="false" />
+    </target>
+	
+    <target name="jar">
+        <mkdir dir="${build.jar.dir}"/>
+        <jar destfile="${build.jar.dir}/pinder.jar" basedir="${build.classes.dir}">
+            <manifest>
+            	<attribute name="Manifest-Version" value="1.0"/>
+                <attribute name="Main-Class" value="Starter"/> 
+            </manifest>
+            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" />
+        	<fileset dir="src" includes="log4j.xml"/>
+        </jar>
+    	<copy file="config.properties" todir="${build.jar.dir}"/>
+    </target>
+	
+    <target name="testrun">
+        <java jar="${build.jar.dir}/pinder.jar" fork="true" timeout="10000"/>
+    </target>
+	
+	<target name="initdb">  
+	  <sql driver="com.mysql.jdbc.Driver"
+		   url="jdbc:mysql://${host}:${port}/${base}"
+		   userid="${login}" password="${pass}" classpathref="classpath" >
+		<transaction  src="${sql.dir}/init.sql"/>
+	  </sql>
+	</target>
+
+	<target name="build" depends="clean, compile, jar, initdb, testrun">
+		<echo>BUILD SUCCESSFUL!</echo>
+	</target>
+</project>
